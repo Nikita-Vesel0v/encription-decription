@@ -6,24 +6,26 @@ const val ALPHABET_LOW = "abcdefghijklmnopqrstuvwxyz"
 val ALPHABET_UP = ALPHABET_LOW.uppercase()
 
 class Cryptographer(args: Array<String>) {
-    private var mode: String = "enc"
-    private var data: String = ""
-    private var key: Int = 0
-    private var outputFilename = ""
-    private var alg = "shift"
+    private var config = hashMapOf(
+        "mode" to "enc",
+        "data" to "",
+        "key" to "0",
+        "out" to "", //filename to output
+        "alg" to "shift",
+    )
     private var output = ""
     private var codeDict = hashMapOf<Char, Char>()
 
     init {
-        for (i in 0 until args.size / 2) {
+        for (i in args.indices step 2) { //because (args.size / 2) - count of parameters
             try {
-                when (args[i * 2]) {
-                    "-mode" -> mode = args[i * 2 + 1].lowercase()
-                    "-data" -> data = args[i * 2 + 1]
-                    "-key" -> key = args[i * 2 + 1].toInt()
-                    "-in" -> data = File(args[i * 2 + 1]).readText()
-                    "-out" -> outputFilename = args[i * 2 + 1]
-                    "-alg" -> alg = args[i * 2 + 1]
+                when (args[i]) {
+                    "-mode" -> config["mode"] = args[i + 1].lowercase()
+                    "-alg" -> config["alg"] = args[i + 1]
+                    "-data" -> config["data"] = args[i + 1]
+                    "-key" -> config["key"] = args[i + 1]
+                    "-in" -> config["data"] = File(args[i + 1]).readText()
+                    "-out" -> config["out"] = args[i + 1]
                 }
             } catch (e: Exception) {
                 throw IllegalArgumentException("Error - Invalid input data: ${args.joinToString(" ")}")
@@ -31,36 +33,36 @@ class Cryptographer(args: Array<String>) {
         }
     }
     fun menu() {
-        output = when (alg) {
+        output = when (config["alg"]) {
             "unicode" -> algUnicode()
             "shift" -> algShift()
-            else -> throw Exception("Error - Unknown algorithm: $alg")
+            else -> throw Exception("Error - Unknown algorithm: ${config["alg"]}")
         }
-        if (outputFilename.isNotEmpty()) { File(outputFilename).writeText(output) }
+        if (config["outputFilename"].isNullOrBlank()) config["out"]?.let { File(it).writeText(output) }
         else println(output)
     }
     private fun algUnicode() =
-        when (mode) {
-            "enc" -> data.map { it + key }.joinToString("")
-            "dec" -> data.map { it - key }.joinToString("")
-            else -> throw Exception("Error - Unknown mode: $mode")
+        when (config["mode"]) {
+            "enc" -> config["data"]!!.map { it + config["key"]!!.toInt() }.joinToString("")
+            "dec" -> config["data"]!!.map { it - config["key"]!!.toInt() }.joinToString("")
+            else -> throw Exception("Error - Unknown mode: ${config["mode"]}")
         }
     private fun algShift() = buildString {
         codeDict.apply {
             for (ch in 0..25) {
-                when (mode) {
+                when (config["mode"]) {
                     "enc" -> {
-                        this[ALPHABET_LOW[ch]] = ALPHABET_LOW[(ch + key) % 26]
-                        this[ALPHABET_UP[ch]] = ALPHABET_UP[(ch + key) % 26]
+                        this[ALPHABET_LOW[ch]] = ALPHABET_LOW[(ch + config["key"]!!.toInt()) % 26]
+                        this[ALPHABET_UP[ch]] = ALPHABET_UP[(ch + config["key"]!!.toInt()) % 26]
                     }
                     "dec" -> {
-                        this[ALPHABET_LOW[(ch + key) % 26]] = ALPHABET_LOW[ch]
-                        this[ALPHABET_UP[(ch + key) % 26]] = ALPHABET_UP[ch]
+                        this[ALPHABET_LOW[(ch + config["key"]!!.toInt()) % 26]] = ALPHABET_LOW[ch]
+                        this[ALPHABET_UP[(ch + config["key"]!!.toInt()) % 26]] = ALPHABET_UP[ch]
                     }
                 }
             }
         }
-        data.forEach { append(if (it in codeDict) codeDict[it] else it) }
+        config["data"]!!.forEach { append(if (it in codeDict) codeDict[it] else it) }
     }
 }
 
