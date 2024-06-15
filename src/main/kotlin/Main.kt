@@ -3,7 +3,6 @@ package encryptdecrypt
 import java.io.File
 
 const val ALPHABET_LOW = "abcdefghijklmnopqrstuvwxyz"
-val ALPHABET_UP = ALPHABET_LOW.uppercase()
 
 class Cryptographer(args: Array<String>) {
     private var config = hashMapOf(
@@ -38,7 +37,7 @@ class Cryptographer(args: Array<String>) {
             "shift" -> algShift()
             else -> throw Exception("Error - Unknown algorithm: ${config["alg"]}")
         }
-        if (config["outputFilename"].isNullOrBlank()) config["out"]?.let { File(it).writeText(output) }
+        if (!config["out"].isNullOrBlank()) config["out"]?.let { File(it).writeText(output) }
         else println(output)
     }
     private fun algUnicode() =
@@ -50,19 +49,21 @@ class Cryptographer(args: Array<String>) {
     private fun algShift() = buildString {
         codeDict.apply {
             for (ch in 0..25) {
-                when (config["mode"]) {
-                    "enc" -> {
-                        this[ALPHABET_LOW[ch]] = ALPHABET_LOW[(ch + config["key"]!!.toInt()) % 26]
-                        this[ALPHABET_UP[ch]] = ALPHABET_UP[(ch + config["key"]!!.toInt()) % 26]
-                    }
-                    "dec" -> {
-                        this[ALPHABET_LOW[(ch + config["key"]!!.toInt()) % 26]] = ALPHABET_LOW[ch]
-                        this[ALPHABET_UP[(ch + config["key"]!!.toInt()) % 26]] = ALPHABET_UP[ch]
-                    }
-                }
+                this[ALPHABET_LOW[ch]] = ALPHABET_LOW[(ch + config["key"]!!.toInt()) % 26]
             }
         }
-        config["data"]!!.forEach { append(if (it in codeDict) codeDict[it] else it) }
+        if (config["mode"] == "dec") {
+            val newCodeDict = HashMap<Char, Char>()
+            codeDict.entries.forEach { (key, value) -> newCodeDict[value] = key  }
+            codeDict = newCodeDict
+        }
+        config["data"]!!.forEach {
+            append(
+                if (it.lowercaseChar() in codeDict.keys) {
+                    if (it.lowercaseChar() == it) codeDict[it] else codeDict[it.lowercaseChar()]!!.uppercaseChar()
+                } else it
+            )
+        }
     }
 }
 
