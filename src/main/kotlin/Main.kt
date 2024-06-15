@@ -64,16 +64,7 @@ class Cryptographer(args: Array<String>) {
     }
 }
 
-fun createArgs(): Array<String> {
-    var args = arrayOf<String>()
-    print("Mode: "); args += "-mode"; args += readln()
-    print("Data: "); args += "-data"; args += readln()
-    print("Key: "); args += "-key"; args += readln()
-    return args
-}
-
 fun main(args: Array<String>) {
-    val programArgs = if (args.isEmpty()) createArgs() else args
-    val cryptographer = Cryptographer(programArgs)
+    val cryptographer = Cryptographer(args)
     cryptographer.menu()
 }
