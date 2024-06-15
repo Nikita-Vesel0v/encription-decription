@@ -9,9 +9,9 @@ class Cryptographer(args: Array<String>) {
     private var mode: String = "enc"
     private var data: String = ""
     private var key: Int = 0
-    private var output = ""
     private var outputFilename = ""
     private var alg = "shift"
+    private var output = ""
     private var codeDict = hashMapOf<Char, Char>()
 
     init {
@@ -64,7 +64,17 @@ class Cryptographer(args: Array<String>) {
     }
 }
 
+fun createArgs(): Array<String> {
+    var args = arrayOf<String>()
+    print("Mode(enc/dec): "); args += "-mode"; args += readln()
+    print("Algorithm(Shift/Unicode): "); args+= "-alg"; args += readln()
+    print("Data: "); args += "-data"; args += readln()
+    print("Key: "); args += "-key"; args += readln()
+    return args
+}
+
 fun main(args: Array<String>) {
-    val cryptographer = Cryptographer(args)
+    val programArgs = if (args.isEmpty()) createArgs() else args
+    val cryptographer = Cryptographer(programArgs)
     cryptographer.menu()
 }
